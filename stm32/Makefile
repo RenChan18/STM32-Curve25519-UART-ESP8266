@@ -6,7 +6,7 @@ SRCFILES     := $(wildcard $(SRC_DIR)/*.c)
 
 PREFIX       ?= arm-none-eabi
 TOP_DIR      := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
-OPENCM3_DIR  := ./libopencm3
+OPENCM3_DIR  := ../libopencm3
 LIBNAME      = opencm3_stm32f4
 DEFS        += -DSTM32F4
 
