@@ -1,4 +1,5 @@
-build/
+stm32/build/
+esp8266/main/build/
 # Prerequisites
 *.d
 
