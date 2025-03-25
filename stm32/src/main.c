@@ -1,7 +1,13 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include "monocypher.h"
 
+#include <libopencm3/stm32/f4/usart.h>
+#include <libopencm3/stm32/rcc.h>
+#include <libopencm3/stm32/gpio.h>
+#include <libopencm3/stm32/rng.h>
+#include <libopencm3/stm32/timer.h>
 
 #ifdef BEGIN_DECLS
 #undef BEGIN_DECLS
@@ -11,35 +17,32 @@
 #endif
 #define BEGIN_DECLS
 #define END_DECLS
-#include <libopencm3/stm32/f4/usart.h>
-#include <libopencm3/stm32/rcc.h>
-#include <libopencm3/stm32/gpio.h>
-#include <libopencm3/stm32/rng.h>
-#include <libopencm3/stm32/timer.h>
-#include "monocypher.h"
 
-
-void uart_setup(void);
-void uart_send_string(const char *str);
-void print_key(const uint8_t *key, size_t length);
-void randombytes(uint8_t *buffer, size_t size);
-void timer_setup(void);
-uint32_t timer_get_time_us(void);
+#define BUFFER_SIZE 64
 
 #define PRIVATE_KEY_SIZE 32
 #define PUBLIC_KEY_SIZE 32
 
-void uart_setup(void) {
-    rcc_periph_clock_enable(RCC_GPIOA);
-    rcc_periph_clock_enable(RCC_USART2);
+void clock_setup(void) {
+    rcc_osc_on(RCC_HSE);
+    rcc_wait_for_osc_ready(RCC_HSE);
+    rcc_set_sysclk_source(RCC_HSE);
 
+    rcc_periph_clock_enable(RCC_GPIOA);
+    rcc_periph_clock_enable(RCC_GPIOD);
+    rcc_periph_clock_enable(RCC_USART2);
+}
+
+void gpio_setup(void) {
     gpio_mode_setup(GPIOA, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO2 | GPIO3);
     gpio_set_af(GPIOA, GPIO_AF7, GPIO2 | GPIO3);
+}
 
+void uart_setup(void) {
     usart_set_baudrate(USART2, 115200);
     usart_set_databits(USART2, 8);
     usart_set_stopbits(USART2, USART_STOPBITS_1);
-    usart_set_mode(USART2, USART_MODE_TX);
+    usart_set_mode(USART2, USART_MODE_TX_RX);
     usart_set_parity(USART2, USART_PARITY_NONE);
     usart_set_flow_control(USART2, USART_FLOWCONTROL_NONE);
 
@@ -88,13 +91,15 @@ uint32_t timer_get_time_us(void) {
     return timer_get_counter(TIM2);
 }
 
+
 int main(void) {
+    clock_setup();
+    gpio_setup();
     uart_setup();
     timer_setup();
 
     uint8_t public_key[PUBLIC_KEY_SIZE];
 
-    //randombytes(private_key, PRIVATE_KEY_SIZE);
     uint8_t private_key[PRIVATE_KEY_SIZE] = {
     0x1a, 0x2b, 0x3c, 0x4d, 0x5e, 0x6f, 0x70, 0x81,
     0x92, 0xa3, 0xb4, 0xc5, 0xd6, 0xe7, 0xf8, 0x09,
@@ -123,4 +128,5 @@ int main(void) {
     while (1);
     return 0;
 }
+
 
